@@ -1,4 +1,3 @@
-
 import discord 
 from discord import app_commands
 from discord.ext import commands, tasks
@@ -437,6 +436,21 @@ async def approveappeal(interaction: discord.Interaction, user_id: str):
         del appeal_records[user_id]
         save_hardkicks(appeal_records)
 
+@app_commands.command(name="addroleforallhumans", description="Add a role to all members in the server.")
+@app_commands.describe(role="Role to add to all members")
+async def addroleforallhumans(interaction: discord.Interaction, role: discord.Role):
+    if not interaction.user.guild_permissions.manage_roles:
+        await interaction.response.send_message("You do not have permission to manage roles.", ephemeral=True)
+        return
+    for member in interaction.guild.members:
+        if not member.bot:
+            try:
+                await member.add_roles(role)
+            except Exception as e:
+                await interaction.response.send_message(f"Failed to add role to {member.name}: {e}", ephemeral=True)
+                return
+    await interaction.response.send_message(f"Role {role.name} has been added to all members.", ephemeral=True)
+
 @app_commands.command(name="rejectappeal", description="Reject a user's appeal (admin only, DM only)")
 @app_commands.describe(user_id="ID of the user to reject", reason="Reason for rejection")
 async def rejectappeal(interaction: discord.Interaction, user_id: str, reason: str):
@@ -455,11 +469,14 @@ async def rejectappeal(interaction: discord.Interaction, user_id: str, reason: s
 ROLE_TEMPLATES = {
     "owner": {
         "name": "👑 Owner",
-        "permissions": discord.Permissions(administrator=True),
-        "color": discord.Color.gold()
+        "permissions": discord.Permissions(administrator=True,),
+        "hoist": True,
+        "color": discord.Color.gold(),
+        "position": 1
     },
     "pro_mod": {
         "name": "🔥 Pro Mod",
+        "hoist": True,
         "permissions": discord.Permissions(
             manage_messages=True, kick_members=True, ban_members=True, manage_roles=True, manage_channels=True,
             create_instant_invite=True, send_messages=True, send_messages_in_threads=True, manage_threads=True,
@@ -471,6 +488,7 @@ ROLE_TEMPLATES = {
     },
     "active": {
         "name": "💬 Active",
+        "hoist": True,
         "permissions": discord.Permissions(
             send_messages=True, read_messages=True, connect=True, speak=True, read_message_history=True,
             add_reactions=True, embed_links=True, attach_files=True, use_external_emojis=True, use_external_stickers=True
@@ -479,6 +497,7 @@ ROLE_TEMPLATES = {
     },
     "member": {
         "name": "👤 Member",
+        "hoist": True,
         "permissions": discord.Permissions(
             read_messages=True, send_messages=True, connect=True, speak=True, read_message_history=True,
             add_reactions=True, embed_links=True, attach_files=True, use_external_emojis=True, use_external_stickers=True
@@ -487,6 +506,7 @@ ROLE_TEMPLATES = {
     },
     "mod": {
         "name": "🛡️ Mod",
+        "hoist": True,
         "permissions": discord.Permissions(
             kick_members=True, ban_members=True, manage_messages=True, manage_roles=True, view_channel=True,
             manage_channels=True, create_instant_invite=True, send_messages=True, send_messages_in_threads=True,
@@ -499,6 +519,7 @@ ROLE_TEMPLATES = {
     },
     "head_mod": {
         "name": "⭐ Head Mod",
+        "hoist": True,
         "permissions": discord.Permissions(
             kick_members=True, ban_members=True, manage_messages=True, manage_roles=True, manage_channels=True
         ),
@@ -527,6 +548,7 @@ async def addrolefromtemplate(interaction: discord.Interaction, template: str):
             permissions=config["permissions"],
             color=config["color"],
             mentionable=True,
+            hoist=config["hoist"],
             reason=f"Created by {interaction.user} using /addrolefromtemplate"
         )
         await interaction.response.send_message(f"Role {role.mention} created successfully!", ephemeral=True)
@@ -938,7 +960,8 @@ class BlueMoonBot(commands.Bot):
         self.tree.add_command(setusrlvl)
         self.tree.add_command(roleinfo)
         self.tree.add_command(lvlprogress)
-        # Do NOT add Economy.level_slash again, already registered by decorator
+        self.tree.add_command(addroleforallhumans)
+        
         await self.tree.sync()
         print(f"Synced slash commands globally (including DMs, assignrole, addrolefromtemplate, addrole, addchannel, addcategory, addvc, purge_messages, slowmode, setuplevel, setusrlvl, roleinfo, lvlprogress, and level).")
 
