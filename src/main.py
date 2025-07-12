@@ -1,3 +1,4 @@
+
 import discord 
 from discord import app_commands
 from discord.ext import commands, tasks
@@ -7,6 +8,53 @@ import asyncio
 import os 
 from discord import Forbidden
 import dotenv
+import random
+
+###########################
+# --- GLOBAL SLASH COMMANDS ---
+###########################
+
+@app_commands.command(name="lvlprogress", description="Show your XP, XP needed for next level, and estimated messages needed.")
+async def lvlprogress(interaction: discord.Interaction):
+    user_id = str(interaction.user.id)
+    guild_id = str(interaction.guild.id)
+    key = f"{guild_id}:{user_id}"
+    user_data = levels.get(key, {"xp": 0, "level": 1})
+    level = user_data["level"]
+    xp = user_data["xp"]
+    if level >= 10:
+        await interaction.response.send_message(f"You are at the max level (10)! Total XP: {xp}", ephemeral=True)
+        return
+    next_level = level + 1
+    required_xp = next_level * 100
+    xp_needed = required_xp - xp
+    avg_xp_per_msg = 10  # Based on random.randint(5, 15)
+    est_msgs = max(1, xp_needed // avg_xp_per_msg)
+    embed = discord.Embed(title="Level Progress", color=discord.Color.blurple())
+    embed.add_field(name="Current Level", value=str(level), inline=True)
+    embed.add_field(name="Current XP", value=str(xp), inline=True)
+    embed.add_field(name="Next Level", value=str(next_level), inline=True)
+    embed.add_field(name="XP Needed", value=str(xp_needed), inline=True)
+    embed.add_field(name="Estimated Messages Needed", value=str(est_msgs), inline=True)
+    await interaction.response.send_message(embed=embed, ephemeral=True)
+
+@app_commands.command(name="roleinfo", description="Show info and permissions for a role.")
+@app_commands.describe(role="The role to show info for")
+async def roleinfo(interaction: discord.Interaction, role: discord.Role):
+    embed = discord.Embed(title=f"Role Info: {role.name}", color=role.color)
+    embed.add_field(name="Role ID", value=role.id, inline=True)
+    embed.add_field(name="Hoisted?", value="Yes" if role.hoist else "No", inline=True)
+    embed.add_field(name="Mentionable?", value="Yes" if role.mentionable else "No", inline=True)
+    embed.add_field(name="Color", value=str(role.color), inline=True)
+    perms = [perm.replace('_', ' ').title() for perm, val in role.permissions if val]
+    if perms:
+        perms_str = ", ".join(perms)
+    else:
+        perms_str = "None"
+    embed.add_field(name="Permissions", value=perms_str, inline=False)
+    embed.set_footer(text=f"Position: {role.position}")
+    await interaction.response.send_message(embed=embed, ephemeral=True)
+
 
 dotenv.load_dotenv(r"C:\Users\Aarav Maloo\Desktop\blue_moon\src\secret.env")
 DISCORD_TOKEN = os.getenv("BOT_TOKEN")
@@ -18,6 +66,48 @@ intents.guilds = True
 intents.voice_states = True
 
 HARDKICKS_FILE = "hardkicks.json"
+LEVELS_FILE = "levels.json"
+
+LEVEL_ROLE_CONFIG = [
+    # (level, role_name, permissions, color, hoist)
+    (1, "Level 1", discord.Permissions(
+        read_messages=True, send_messages=True, add_reactions=True,
+        create_public_threads=True, create_private_threads=True, read_message_history=True
+    ), discord.Color.light_grey(), True),
+    (2, "Level 2", discord.Permissions(
+        read_messages=True, send_messages=True, add_reactions=True, embed_links=True, attach_files=True,
+        create_public_threads=True, create_private_threads=True, read_message_history=True, use_external_emojis=True
+    ), discord.Color.teal(), True),
+    (3, "Level 3", discord.Permissions(
+        read_messages=True, send_messages=True, add_reactions=True, embed_links=True, attach_files=True,
+        create_public_threads=True, create_private_threads=True, read_message_history=True, use_external_emojis=True, use_external_stickers=True
+    ), discord.Color.green(), True),
+    (4, "Level 4", discord.Permissions(
+        read_messages=True, send_messages=True, add_reactions=True, embed_links=True, attach_files=True,
+        create_public_threads=True, create_private_threads=True, read_message_history=True, use_external_emojis=True, use_external_stickers=True, connect=True, speak=True
+    ), discord.Color.blue(), True),
+    (5, "Level 5", discord.Permissions(
+        read_messages=True, send_messages=True, add_reactions=True, embed_links=True, attach_files=True,
+        create_public_threads=True, create_private_threads=True, read_message_history=True, use_external_emojis=True, use_external_stickers=True, connect=True, speak=True, mention_everyone=True
+    ), discord.Color.purple(), True),
+    (6, "Level 6", discord.Permissions(
+        read_messages=True, send_messages=True, add_reactions=True, embed_links=True, attach_files=True,
+        create_public_threads=True, create_private_threads=True, read_message_history=True, use_external_emojis=True, use_external_stickers=True, connect=True, speak=True, mention_everyone=True, manage_messages=True
+    ), discord.Color.orange(), True),
+    (7, "Level 7", discord.Permissions(
+        read_messages=True, send_messages=True, add_reactions=True, embed_links=True, attach_files=True,
+        create_public_threads=True, create_private_threads=True, read_message_history=True, use_external_emojis=True, use_external_stickers=True, connect=True, speak=True, mention_everyone=True, manage_messages=True, manage_threads=True
+    ), discord.Color.gold(), True),
+    (8, "Level 8", discord.Permissions(
+        read_messages=True, send_messages=True, add_reactions=True, embed_links=True, attach_files=True,
+        create_public_threads=True, create_private_threads=True, read_message_history=True, use_external_emojis=True, use_external_stickers=True, connect=True, speak=True, mention_everyone=True, manage_messages=True, manage_threads=True, manage_webhooks=True
+    ), discord.Color.dark_gold(), True),
+    (9, "Level 9", discord.Permissions(
+        read_messages=True, send_messages=True, add_reactions=True, embed_links=True, attach_files=True,
+        create_public_threads=True, create_private_threads=True, read_message_history=True, use_external_emojis=True, use_external_stickers=True, connect=True, speak=True, mention_everyone=True, manage_messages=True, manage_threads=True, manage_webhooks=True, manage_nicknames=True
+    ), discord.Color.dark_teal(), True),
+    (10, "Level 10", discord.Permissions.all(), discord.Color.red(), True),  # Owner, all perms
+]
 
 def load_hardkicks():
     if os.path.exists(HARDKICKS_FILE):
@@ -31,6 +121,18 @@ def save_hardkicks(data):
 
 # Store appeals in persistent storage
 appeal_records = load_hardkicks()
+
+def load_levels():
+    if os.path.exists(LEVELS_FILE):
+        with open(LEVELS_FILE, "r") as f:
+            return json.load(f)
+    return {}
+
+def save_levels(data):
+    with open(LEVELS_FILE, "w") as f:
+        json.dump(data, f)
+
+levels = load_levels()
 
 class Mod(commands.Cog):
     def __init__(self, bot):
@@ -528,19 +630,317 @@ async def addrole(interaction: discord.Interaction, name: str, color: str = None
             except Forbidden:
                 await ctx.send("I do not have permission to create roles. Please check my permissions and role order.")
 
+@app_commands.command(name="addchannel", description="Create a text channel in a specified category.")
+@app_commands.describe(
+    channel_name="Name of the channel to create",
+    category_name="Name of the category to create the channel in"
+)
+@app_commands.checks.has_permissions(administrator=True, manage_channels=True)
+async def addchannel(interaction: discord.Interaction, channel_name: str, category_name: str):
+    guild = interaction.guild
+    # Find or create the category
+    category = discord.utils.get(guild.categories, name=category_name)
+    if not category:
+        try:
+            category = await guild.create_category(name=category_name, reason=f"Created by {interaction.user} using /addchannel")
+        except Forbidden:
+            await interaction.response.send_message("I do not have permission to create categories. Please check my permissions.", ephemeral=True)
+            return
+    # Check if channel already exists in category
+    if discord.utils.get(category.channels, name=channel_name):
+        await interaction.response.send_message(f"Channel #{channel_name} already exists in {category.name}.", ephemeral=True)
+        return
+    try:
+        channel = await guild.create_text_channel(
+            name=channel_name,
+            category=category,
+            reason=f"Created by {interaction.user} using /addchannel"
+        )
+        await interaction.response.send_message(f"Channel {channel.mention} created in category {category.name}.", ephemeral=True)
+    except Forbidden:
+        await interaction.response.send_message("I do not have permission to create channels. Please check my permissions.", ephemeral=True)
+
+@app_commands.command(name="addcategory", description="Create a new category.")
+@app_commands.describe(category_name="Name of the category to create")
+@app_commands.checks.has_permissions(administrator=True, manage_channels=True)
+async def addcategory(interaction: discord.Interaction, category_name: str):
+    guild = interaction.guild
+    if discord.utils.get(guild.categories, name=category_name):
+        await interaction.response.send_message(f"Category '{category_name}' already exists.", ephemeral=True)
+        return
+    try:
+        category = await guild.create_category(name=category_name, reason=f"Created by {interaction.user} using /addcategory")
+        await interaction.response.send_message(f"Category '{category.name}' created successfully!", ephemeral=True)
+    except Forbidden:
+        await interaction.response.send_message("I do not have permission to create categories. Please check my permissions.", ephemeral=True)
+
+    @commands.command(name="addcategory")
+    @commands.has_permissions(administrator=True, manage_channels=True)
+    async def addcategory_prefix(self, ctx, category_name: str):
+        guild = ctx.guild
+        if discord.utils.get(guild.categories, name=category_name):
+            await ctx.send(f"Category '{category_name}' already exists.")
+            return
+        try:
+            category = await guild.create_category(name=category_name, reason=f"Created by {ctx.author} using !addcategory")
+            await ctx.send(f"Category '{category.name}' created successfully!")
+        except Forbidden:
+            await ctx.send("I do not have permission to create categories. Please check my permissions.")
+
+@app_commands.command(name="addvc", description="Create a voice channel in a specified category.")
+@app_commands.describe(
+    channel_name="Name of the voice channel to create",
+    category_name="Name of the category to create the channel in"
+)
+@app_commands.checks.has_permissions(administrator=True, manage_channels=True)
+async def addvc(interaction: discord.Interaction, channel_name: str, category_name: str):
+    guild = interaction.guild
+    # Find or create the category
+    category = discord.utils.get(guild.categories, name=category_name)
+    if not category:
+        try:
+            category = await guild.create_category(name=category_name, reason=f"Created by {interaction.user} using /addvc")
+        except Forbidden:
+            await interaction.response.send_message("I do not have permission to create categories. Please check my permissions.", ephemeral=True)
+            return
+    # Check if channel already exists in category
+    if discord.utils.get(category.channels, name=channel_name):
+        await interaction.response.send_message(f"Voice channel '{channel_name}' already exists in {category.name}.", ephemeral=True)
+        return
+    try:
+        channel = await guild.create_voice_channel(
+            name=channel_name,
+            category=category,
+            reason=f"Created by {interaction.user} using /addvc"
+        )
+        await interaction.response.send_message(f"Voice channel {channel.mention} created in category {category.name}.", ephemeral=True)
+    except Forbidden:
+        await interaction.response.send_message("I do not have permission to create voice channels. Please check my permissions.", ephemeral=True)
+
+    @commands.command(name="addvc")
+    @commands.has_permissions(administrator=True, manage_channels=True)
+    async def addvc_prefix(self, ctx, channel_name: str, category_name: str):
+        guild = ctx.guild
+        category = discord.utils.get(guild.categories, name=category_name)
+        if not category:
+            try:
+                category = await guild.create_category(name=category_name, reason=f"Created by {ctx.author} using !addvc")
+            except Forbidden:
+                await ctx.send("I do not have permission to create categories. Please check my permissions.")
+                return
+        if discord.utils.get(category.channels, name=channel_name):
+            await ctx.send(f"Voice channel '{channel_name}' already exists in {category.name}.")
+            return
+        try:
+            channel = await guild.create_voice_channel(
+                name=channel_name,
+                category=category,
+                reason=f"Created by {ctx.author} using !addvc"
+            )
+            await ctx.send(f"Voice channel {channel.mention} created in category {category.name}.")
+        except Forbidden:
+            await ctx.send("I do not have permission to create voice channels. Please check my permissions.")
+
+@app_commands.command(name="purge_messages", description="Delete all messages in a channel, regardless of age.")
+@app_commands.checks.has_permissions(administrator=True, manage_messages=True)
+async def purge_messages(interaction: discord.Interaction):
+    channel = interaction.channel
+    await interaction.response.send_message("Purging all messages in this channel...", ephemeral=True)
+    try:
+        deleted = 0
+        async for message in channel.history(limit=None, oldest_first=True):
+            try:
+                await message.delete()
+                deleted += 1
+            except Exception:
+                pass  # Ignore errors for messages that can't be deleted
+        await interaction.followup.send(f"Purged {deleted} messages from {channel.mention}.", ephemeral=True)
+    except Forbidden:
+        await interaction.followup.send("I do not have permission to delete messages in this channel.", ephemeral=True)
+
+@app_commands.command(name="slowmode", description="Enable or disable slowmode in this channel.")
+@app_commands.describe(
+    action="'enable' to set slowmode, 'disable' to turn it off",
+    duration="Duration for slowmode",
+    unit="Unit for duration (sec, min, hr)"
+)
+@app_commands.checks.has_permissions(administrator=True, manage_channels=True)
+async def slowmode(interaction: discord.Interaction, action: str, duration: int = 0, unit: str = "sec"):
+    channel = interaction.channel
+    if action.lower() == "enable":
+        # Convert duration to seconds
+        unit = unit.lower()
+        seconds = duration
+        if unit.startswith("min"):
+            seconds *= 60
+        elif unit.startswith("h"):
+            seconds *= 3600
+        elif unit.startswith("s"):
+            pass
+        else:
+            await interaction.response.send_message("Unit must be one of: sec, min, hr.", ephemeral=True)
+            return
+        if seconds < 1 or seconds > 21600:
+            await interaction.response.send_message("Duration must be between 1 second and 21,600 seconds (6 hours) due to Discord's limit.", ephemeral=True)
+            return
+        try:
+            await channel.edit(slowmode_delay=seconds)
+            await interaction.response.send_message(f"Slowmode enabled: {seconds} seconds per message in {channel.mention}.", ephemeral=True)
+        except Forbidden:
+            await interaction.response.send_message("I do not have permission to set slowmode in this channel.", ephemeral=True)
+        except Exception as e:
+            await interaction.response.send_message(f"Failed to set slowmode: {e}", ephemeral=True)
+    elif action.lower() == "disable":
+        try:
+            await channel.edit(slowmode_delay=0)
+            await interaction.response.send_message(f"Slowmode disabled in {channel.mention}.", ephemeral=True)
+        except Forbidden:
+            await interaction.response.send_message("I do not have permission to disable slowmode in this channel.", ephemeral=True)
+        except Exception as e:
+            await interaction.response.send_message(f"Failed to disable slowmode: {e}", ephemeral=True)
+    else:
+        await interaction.response.send_message("Invalid action. Use 'enable' or 'disable'.", ephemeral=True)
+
+class Economy(commands.Cog):
+    def __init__(self, bot):
+        self.bot = bot
+        self.levels = levels
+
+    @commands.Cog.listener()
+    async def on_message(self, message):
+        if message.author.bot or not message.guild:
+            return
+        user_id = str(message.author.id)
+        guild_id = str(message.guild.id)
+        key = f"{guild_id}:{user_id}"
+        user_data = self.levels.get(key, {"xp": 0, "level": 1})
+        # Give random XP per message
+        xp_gain = random.randint(5, 15)
+        user_data["xp"] += xp_gain
+        # Level up logic
+        next_level = user_data["level"] + 1
+        if next_level <= 10:
+            required_xp = next_level * 100
+            if user_data["xp"] >= required_xp:
+                user_data["level"] = next_level
+                # Assign new role, remove old
+                guild = message.guild
+                member = message.author
+                # Remove all level roles
+                for lvl, role_name, _, _, _ in LEVEL_ROLE_CONFIG:
+                    role = discord.utils.get(guild.roles, name=role_name)
+                    if role and role in member.roles:
+                        await member.remove_roles(role, reason="Level up")
+                # Add new level role
+                _, role_name, _, _, _ = LEVEL_ROLE_CONFIG[next_level-1]
+                role = discord.utils.get(guild.roles, name=role_name)
+                if role:
+                    await member.add_roles(role, reason="Level up reward")
+                try:
+                    await member.send(f"Congrats! You reached level {next_level} and received the role: {role_name}!")
+                except Exception:
+                    pass
+        self.levels[key] = user_data
+        save_levels(self.levels)
+
+    @app_commands.command(name="level", description="Check your level and XP.")
+    async def level_slash(self, interaction: discord.Interaction):
+        user_id = str(interaction.user.id)
+        guild_id = str(interaction.guild.id)
+        key = f"{guild_id}:{user_id}"
+        user_data = self.levels.get(key, {"xp": 0, "level": 1})
+        await interaction.response.send_message(f"Level: {user_data['level']} | XP: {user_data['xp']}", ephemeral=True)
+
+@app_commands.command(name="setuplevel", description="Setup the level system and roles.")
+@app_commands.checks.has_permissions(administrator=True, manage_roles=True)
+async def setuplevel(interaction: discord.Interaction):
+    guild = interaction.guild
+    await interaction.response.defer(ephemeral=True)
+    # Remove/modify existing level roles to avoid clashes
+    for lvl, role_name, _, _, _ in LEVEL_ROLE_CONFIG:
+        role = discord.utils.get(guild.roles, name=role_name)
+        if role:
+            await role.delete(reason="Recreating level roles for setup.")
+    # Create level roles
+    created_roles = []
+    for lvl, role_name, perms, color, hoist in LEVEL_ROLE_CONFIG:
+        role = await guild.create_role(
+            name=role_name,
+            permissions=perms,
+            color=color,
+            mentionable=True,
+            hoist=hoist,
+            reason="Level system setup"
+        )
+        created_roles.append(role)
+
+    # Reorder level roles: Level 10 (top) to Level 1 (bottom), just above @everyone
+    # Get the @everyone role position
+    everyone_role = guild.default_role
+    # Sort created_roles by level descending (Level 10 first)
+    sorted_roles = sorted(created_roles, key=lambda r: int(r.name.split()[-1]), reverse=True)
+    # Build new positions: place each level role just above @everyone, in order
+    # Get current role positions
+    role_positions = {role: role.position for role in guild.roles}
+    # Start from @everyone's position + 1
+    new_position = everyone_role.position + 1
+    for role in reversed(sorted_roles):  # Level 1 at bottom, Level 10 at top
+        await role.edit(position=new_position)
+        new_position += 1
+
+    await interaction.followup.send("Level system and roles set up! Users will now gain XP and level up by being active.\nLevel roles are now arranged sensibly above @everyone.", ephemeral=True)
+
+@app_commands.command(name="setusrlvl", description="Set a user's level (admin only)")
+@app_commands.describe(user="User to set level for", level="Level to set (1-10)")
+@app_commands.checks.has_permissions(administrator=True, manage_roles=True)
+async def setusrlvl(interaction: discord.Interaction, user: discord.Member, level: int):
+    if level < 1 or level > 10:
+        await interaction.response.send_message("Level must be between 1 and 10.", ephemeral=True)
+        return
+    guild_id = str(interaction.guild.id)
+    user_id = str(user.id)
+    key = f"{guild_id}:{user_id}"
+    user_data = levels.get(key, {"xp": 0, "level": 1})
+    user_data["level"] = level
+    # Remove all level roles
+    for lvl, role_name, _, _, _ in LEVEL_ROLE_CONFIG:
+        role = discord.utils.get(interaction.guild.roles, name=role_name)
+        if role and role in user.roles:
+            await user.remove_roles(role, reason="Level set by admin")
+    # Add new level role
+    _, role_name, _, _, _ = LEVEL_ROLE_CONFIG[level-1]
+    role = discord.utils.get(interaction.guild.roles, name=role_name)
+    if role:
+        await user.add_roles(role, reason="Level set by admin")
+    levels[key] = user_data
+    save_levels(levels)
+    await interaction.response.send_message(f"Set {user.mention}'s level to {level} and updated roles.", ephemeral=True)
+
+async def setup_economy(bot):
+    await bot.add_cog(Economy(bot))
+
 class BlueMoonBot(commands.Bot):
     async def setup_hook(self):
         await self.add_cog(Mod(self))
-        # Register appeal commands globally (so they work in DMs)
+        await setup_economy(self)
         self.tree.add_command(appeal)
         self.tree.add_command(approveappeal)
         self.tree.add_command(rejectappeal)
         self.tree.add_command(assignrole_slash)
         self.tree.add_command(addrolefromtemplate)
         self.tree.add_command(addrole)
-        # Sync global commands
+        self.tree.add_command(addchannel)
+        self.tree.add_command(addcategory)
+        self.tree.add_command(addvc)
+        self.tree.add_command(purge_messages)
+        self.tree.add_command(slowmode)
+        self.tree.add_command(setuplevel)
+        self.tree.add_command(setusrlvl)
+        self.tree.add_command(roleinfo)
+        self.tree.add_command(lvlprogress)
+        # Do NOT add Economy.level_slash again, already registered by decorator
         await self.tree.sync()
-        print(f"Synced slash commands globally (including DMs, assignrole, addrolefromtemplate, and addrole).")
+        print(f"Synced slash commands globally (including DMs, assignrole, addrolefromtemplate, addrole, addchannel, addcategory, addvc, purge_messages, slowmode, setuplevel, setusrlvl, roleinfo, lvlprogress, and level).")
 
 bot = BlueMoonBot(command_prefix='!', intents=intents)
 
