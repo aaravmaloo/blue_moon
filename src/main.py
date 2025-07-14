@@ -87,23 +87,23 @@ LEVEL_ROLE_CONFIG = [
     ), discord.Color.blue(), True),
     (5, "Level 5", discord.Permissions(
         read_messages=True, send_messages=True, add_reactions=True, embed_links=True, attach_files=True,
-        create_public_threads=True, create_private_threads=True, read_message_history=True, use_external_emojis=True, use_external_stickers=True, connect=True, speak=True, mention_everyone=True
+        create_public_threads=True, create_private_threads=True, read_message_history=True, use_external_emojis=True, use_external_stickers=True, connect=True, speak=True, mention_everyone=True, use_application_commands=True
     ), discord.Color.purple(), True),
     (6, "Level 6", discord.Permissions(
         read_messages=True, send_messages=True, add_reactions=True, embed_links=True, attach_files=True,
-        create_public_threads=True, create_private_threads=True, read_message_history=True, use_external_emojis=True, use_external_stickers=True, connect=True, speak=True, mention_everyone=True, manage_messages=True
+        create_public_threads=True, create_private_threads=True, read_message_history=True, use_external_emojis=True, use_external_stickers=True, connect=True, speak=True, mention_everyone=True, manage_messages=True, use_application_commands=True
     ), discord.Color.orange(), True),
     (7, "Level 7", discord.Permissions(
         read_messages=True, send_messages=True, add_reactions=True, embed_links=True, attach_files=True,
-        create_public_threads=True, create_private_threads=True, read_message_history=True, use_external_emojis=True, use_external_stickers=True, connect=True, speak=True, mention_everyone=True, manage_messages=True, manage_threads=True
+        create_public_threads=True, create_private_threads=True, read_message_history=True, use_external_emojis=True, use_external_stickers=True, connect=True, speak=True, mention_everyone=True, manage_messages=True, manage_threads=True, use_application_commands=True
     ), discord.Color.gold(), True),
     (8, "Level 8", discord.Permissions(
         read_messages=True, send_messages=True, add_reactions=True, embed_links=True, attach_files=True,
-        create_public_threads=True, create_private_threads=True, read_message_history=True, use_external_emojis=True, use_external_stickers=True, connect=True, speak=True, mention_everyone=True, manage_messages=True, manage_threads=True, manage_webhooks=True
+        create_public_threads=True, create_private_threads=True, read_message_history=True, use_external_emojis=True, use_external_stickers=True, connect=True, speak=True, mention_everyone=True, manage_messages=True, manage_threads=True, manage_webhooks=True, use_application_commands=True
     ), discord.Color.dark_gold(), True),
     (9, "Level 9", discord.Permissions(
         read_messages=True, send_messages=True, add_reactions=True, embed_links=True, attach_files=True,
-        create_public_threads=True, create_private_threads=True, read_message_history=True, use_external_emojis=True, use_external_stickers=True, connect=True, speak=True, mention_everyone=True, manage_messages=True, manage_threads=True, manage_webhooks=True, manage_nicknames=True
+        create_public_threads=True, create_private_threads=True, read_message_history=True, use_external_emojis=True, use_external_stickers=True, connect=True, speak=True, mention_everyone=True, manage_messages=True, manage_threads=True, manage_webhooks=True, manage_nicknames=True, use_application_commands=True
     ), discord.Color.dark_teal(), True),
     (10, "Level 10", discord.Permissions.all(), discord.Color.red(), True),  # Owner, all perms
 ]
@@ -435,21 +435,28 @@ async def approveappeal(interaction: discord.Interaction, user_id: str):
     if user_id in appeal_records:
         del appeal_records[user_id]
         save_hardkicks(appeal_records)
-
-@app_commands.command(name="addroleforallhumans", description="Add a role to all members in the server.")
-@app_commands.describe(role="Role to add to all members")
+@app_commands.command(name="addroleforallhumans", description="Add a role to all human members.")
+@app_commands.describe(role="Role to add to all humans")
 async def addroleforallhumans(interaction: discord.Interaction, role: discord.Role):
     if not interaction.user.guild_permissions.manage_roles:
         await interaction.response.send_message("You do not have permission to manage roles.", ephemeral=True)
         return
+
+    # Save role for auto-assignment
+    auto_roles["humans"][interaction.guild.id] = role.id
+
+    failed = []
     for member in interaction.guild.members:
         if not member.bot:
             try:
                 await member.add_roles(role)
-            except Exception as e:
-                await interaction.response.send_message(f"Failed to add role to {member.name}: {e}", ephemeral=True)
-                return
-    await interaction.response.send_message(f"Role {role.name} has been added to all members.", ephemeral=True)
+            except:
+                failed.append(member.name)
+
+    msg = f"✅ Role **{role.name}** added to all human members."
+    if failed:
+        msg += f"\n❌ Failed for: {', '.join(failed)}"
+    await interaction.response.send_message(msg, ephemeral=True)
 
 @app_commands.command(name="rejectappeal", description="Reject a user's appeal (admin only, DM only)")
 @app_commands.describe(user_id="ID of the user to reject", reason="Reason for rejection")
@@ -491,7 +498,7 @@ ROLE_TEMPLATES = {
         "hoist": True,
         "permissions": discord.Permissions(
             send_messages=True, read_messages=True, connect=True, speak=True, read_message_history=True,
-            add_reactions=True, embed_links=True, attach_files=True, use_external_emojis=True, use_external_stickers=True
+            add_reactions=True, embed_links=True, attach_files=True, use_external_emojis=True, use_external_stickers=True, use_application_commands=True
         ),
         "color": discord.Color.green()
     },
@@ -500,7 +507,7 @@ ROLE_TEMPLATES = {
         "hoist": True,
         "permissions": discord.Permissions(
             read_messages=True, send_messages=True, connect=True, speak=True, read_message_history=True,
-            add_reactions=True, embed_links=True, attach_files=True, use_external_emojis=True, use_external_stickers=True
+            add_reactions=True, embed_links=True, attach_files=True, use_external_emojis=True, use_external_stickers=True, use_application_commands=True
         ),
         "color": discord.Color.blue()
     },
@@ -521,7 +528,10 @@ ROLE_TEMPLATES = {
         "name": "⭐ Head Mod",
         "hoist": True,
         "permissions": discord.Permissions(
-            kick_members=True, ban_members=True, manage_messages=True, manage_roles=True, manage_channels=True
+            kick_members=True, ban_members=True, manage_messages=True, manage_roles=True, manage_channels=True, use_application_commands=True, read_messages=True,
+            send_messages=True, send_messages_in_threads=True, manage_threads=True, create_public_threads=True, create_private_threads=True,
+            add_reactions=True, attach_files=True, embed_links=True, read_message_history=True, use_external_emojis=True, use_external_stickers=True, connect=True,
+            speak=True, mention_everyone=True, manage_emojis_and_stickers=True, view_audit_log=True, manage_webhooks=True, manage_nicknames=True, use_application_commands=True
         ),
         "color": discord.Color.teal()
     }
