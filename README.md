@@ -5,7 +5,7 @@ All-in-one Discord bot in Python (`discord.py`) with modular cogs and local SQLi
 This repository is Python-only and stores runtime data in `data/bluemoon.sqlite3` by default.
 
 ## Table Of Contents
-
+0. Installation
 1. Overview
 2. Architecture
 3. Feature Coverage
@@ -19,6 +19,12 @@ This repository is Python-only and stores runtime data in `data/bluemoon.sqlite3
 11. Troubleshooting
 12. Security Notes
 13. Project Structure
+
+## Installation
+
+This bot has been hosted on railway.com and is working as expected. To add this bot to your discord server, click on the link provided below this text.
+
+https://discord.com/oauth2/authorize?client_id=1392870918786646156&permissions=8&integration_type=0&scope=bot
 
 ## Overview
 
@@ -172,14 +178,14 @@ Manual method (Portal):
 
 Environment variables:
 
-| Variable | Required | Default | Purpose |
-|---|---|---|---|
-| `DISCORD_BOT_TOKEN` | Yes | - | Bot token used to login |
-| `DISCORD_CLIENT_ID` | Yes | - | Application client ID |
-| `DISCORD_GUILD_ID` | No | empty | Dev guild for faster slash sync |
-| `BOT_PREFIX` | No | `!` | Prefix for custom text commands |
-| `DATABASE_PATH` | No | `data/bluemoon.sqlite3` | SQLite DB location |
-| `DEFAULT_TIMEZONE` | No | `UTC` | Utility timezone fallback |
+| Variable            | Required | Default                 | Purpose                         |
+| ------------------- | -------- | ----------------------- | ------------------------------- |
+| `DISCORD_BOT_TOKEN` | Yes      | -                       | Bot token used to login         |
+| `DISCORD_CLIENT_ID` | Yes      | -                       | Application client ID           |
+| `DISCORD_GUILD_ID`  | No       | empty                   | Dev guild for faster slash sync |
+| `BOT_PREFIX`        | No       | `!`                     | Prefix for custom text commands |
+| `DATABASE_PATH`     | No       | `data/bluemoon.sqlite3` | SQLite DB location              |
+| `DEFAULT_TIMEZONE`  | No       | `UTC`                   | Utility timezone fallback       |
 
 ## Data Storage
 
